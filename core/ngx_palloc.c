@@ -12,7 +12,7 @@
 static void *ngx_palloc_block(ngx_pool_t *pool, size_t size);
 static void *ngx_palloc_large(ngx_pool_t *pool, size_t size);
 
-
+/* 创建总长度为size大小的ngx_pool */
 ngx_pool_t *
 ngx_create_pool(size_t size, ngx_log_t *log)
 {
@@ -29,6 +29,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     p->d.failed = 0;
 
     size = size - sizeof(ngx_pool_t);
+    /* 最大分配空间4095 B */
     p->max = (size < NGX_MAX_ALLOC_FROM_POOL) ? size : NGX_MAX_ALLOC_FROM_POOL;
 
     p->current = p;
@@ -52,7 +53,8 @@ ngx_destroy_pool(ngx_pool_t *pool)
         if (c->handler) {
             ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0,
                            "run cleanup: %p", c);
-            c->handler(c->data);
+
+            c->handler(c->data);    /* 销毁cleanup链表中的data */
         }
     }
 
@@ -61,7 +63,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "free: %p", l->alloc);
 
         if (l->alloc) {
-            ngx_free(l->alloc);
+            ngx_free(l->alloc); /* 释放大块内存 */
         }
     }
 
@@ -84,7 +86,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
 #endif
 
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
-        ngx_free(p);
+        ngx_free(p);    /* 释放下一个内存池 */
 
         if (n == NULL) {
             break;
@@ -124,7 +126,7 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
         p = pool->current;
 
         do {
-            m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);
+            m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);    /* 内存对齐 */
 
             if ((size_t) (p->d.end - m) >= size) {
                 p->d.last = m + size;

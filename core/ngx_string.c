@@ -1345,7 +1345,7 @@ ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
     static u_char   hex[] = "0123456789abcdef";
 
                     /* " ", "#", "%", "?", %00-%1F, %7F-%FF */
-
+    /* 位图法判断是否需要进行编码 */
     static uint32_t   uri[] = {
         0xffffffff, /* 1111 1111 1111 1111  1111 1111 1111 1111 */
 
@@ -1490,7 +1490,13 @@ ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
     }
 
     while (size) {
-        if (escape[*src >> 5] & (1 << (*src & 0x1f))) {
+        /*
+         * 利用bitmap法来判断字符是否需要进行url编码
+         * 取組, 做除法 取偏移, 求余
+         * 字符编码为%xy, x和y为十六进制编码
+         * x为字符模16后对应的十六进制，y为字符模16取余对应的十六进制
+         */
+        if (escape[*src >> 5] & (1 << (*src & 0x1f))) {/* 需要编码 */
             *dst++ = '%';
             *dst++ = hex[*src >> 4];
             *dst++ = hex[*src & 0xf];
@@ -1528,13 +1534,14 @@ ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
 
         switch (state) {
         case sw_usual:
+            /* 当前字节是否== '?' 且是指定的两种模式那么进入处理，遇到?号直接输出指针退出 */
             if (ch == '?'
                 && (type & (NGX_UNESCAPE_URI|NGX_UNESCAPE_REDIRECT)))
             {
                 *d++ = ch;
                 goto done;
             }
-
+            /* 当前字节是否== '%' 如果是state = sw_quoted 跳出switch，取下一个字节 */
             if (ch == '%') {
                 state = sw_quoted;
                 break;
@@ -1542,18 +1549,18 @@ ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
 
             *d++ = ch;
             break;
-
+        /* 上一个字节是'%'才会进入下面的case */
         case sw_quoted:
-
+            /* 如果'%'后第一位是数字 */
             if (ch >= '0' && ch <= '9') {
                 decoded = (u_char) (ch - '0');
                 state = sw_quoted_second;
                 break;
             }
-
+            /* 转换成小写字母 */
             c = (u_char) (ch | 0x20);
             if (c >= 'a' && c <= 'f') {
-                decoded = (u_char) (c - 'a' + 10);
+                decoded = (u_char) (c - 'a' + 10);  /* 转换成十进制asc值 */
                 state = sw_quoted_second;
                 break;
             }
@@ -1565,20 +1572,21 @@ ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
             *d++ = ch;
 
             break;
-
+        /* %后第二位字符 */
         case sw_quoted_second:
 
             state = sw_usual;
-
+            /* 如果%后第二位是数字 */
             if (ch >= '0' && ch <= '9') {
                 ch = (u_char) ((decoded << 4) + ch - '0');
-
+                /* 如果是跳转需要 */
                 if (type & NGX_UNESCAPE_REDIRECT) {
+                    /* sc值要在37至127之间不包括esc space ! " # $符号 */
                     if (ch > '%' && ch < 0x7f) {
                         *d++ = ch;
                         break;
                     }
-
+                    /* 如果是特殊字符， 仍然encode回去 */
                     *d++ = '%'; *d++ = *(s - 2); *d++ = *(s - 1);
 
                     break;
@@ -1588,10 +1596,10 @@ ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
 
                 break;
             }
-
+            /* 如果%后第二位是字母，转小写 */
             c = (u_char) (ch | 0x20);
             if (c >= 'a' && c <= 'f') {
-                ch = (u_char) ((decoded << 4) + c - 'a' + 10);
+                ch = (u_char) ((decoded << 4) + c - 'a' + 10);  /* 转换成十进制asc值 */
 
                 if (type & NGX_UNESCAPE_URI) {
                     if (ch == '?') {
@@ -1602,18 +1610,18 @@ ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
                     *d++ = ch;
                     break;
                 }
-
+                /* 如果是跳转需要 */
                 if (type & NGX_UNESCAPE_REDIRECT) {
                     if (ch == '?') {
                         *d++ = ch;
                         goto done;
                     }
-
+                    /* asc值要在37至127之间不包括esc space ! " # $符号 */
                     if (ch > '%' && ch < 0x7f) {
                         *d++ = ch;
                         break;
                     }
-
+                    /* 如果是特殊字符， 仍然encode回去 */
                     *d++ = '%'; *d++ = *(s - 2); *d++ = *(s - 1);
                     break;
                 }

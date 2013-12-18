@@ -15,10 +15,10 @@
 
 
 typedef struct {
-     ngx_uint_t  command;
-     ngx_pid_t   pid;
-     ngx_int_t   slot;
-     ngx_fd_t    fd;
+     ngx_uint_t  command;   /* 发送的指令 */
+     ngx_pid_t   pid;       /* worker进程的pid */
+     ngx_int_t   slot;      /* worker进程的slot */
+     ngx_fd_t    fd;        /* 文件描述符 */
 } ngx_channel_t;
 
 

@@ -14,20 +14,20 @@
 
 
 typedef struct {
-    void        *elts;
-    ngx_uint_t   nelts;
-    size_t       size;
-    ngx_uint_t   nalloc;
-    ngx_pool_t  *pool;
+    void        *elts;      /* 数组数据区起始位置 */
+    ngx_uint_t   nelts;     /* 实际存放的元素个数 */
+    size_t       size;      /* 每个元素大小 */
+    ngx_uint_t   nalloc;    /* 数组所含空间个数，即实际分配的空间个数 */
+    ngx_pool_t  *pool;      /* 该数组在内存池中分配 */
 } ngx_array_t;
 
 
-ngx_array_t *ngx_array_create(ngx_pool_t *p, ngx_uint_t n, size_t size);
-void ngx_array_destroy(ngx_array_t *a);
-void *ngx_array_push(ngx_array_t *a);
-void *ngx_array_push_n(ngx_array_t *a, ngx_uint_t n);
+ngx_array_t *ngx_array_create(ngx_pool_t *p, ngx_uint_t n, size_t size);    /* 创建数组 */
+void ngx_array_destroy(ngx_array_t *a);                                     /* 销毁数组 */
+void *ngx_array_push(ngx_array_t *a);                                       /* 添加元素，返回添加元素的地址，不进行实际的添加操作 */
+void *ngx_array_push_n(ngx_array_t *a, ngx_uint_t n);                       /* 添加指定个数元素,返回添加元素的地址，不进行实际的添加操作 */
 
-
+/* 数组初始化 */
 static ngx_inline ngx_int_t
 ngx_array_init(ngx_array_t *array, ngx_pool_t *pool, ngx_uint_t n, size_t size)
 {

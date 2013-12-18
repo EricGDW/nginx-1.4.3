@@ -208,11 +208,11 @@ main(int argc, char *const *argv)
 
     ngx_debug_init();
 
-    if (ngx_strerror_init() != NGX_OK) {    /* 错误类型初始化 */
+    if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
 
-    if (ngx_get_options(argc, argv) != NGX_OK) {    /* 获取输入options */
+    if (ngx_get_options(argc, argv) != NGX_OK) {
         return 1;
     }
 
@@ -269,22 +269,22 @@ main(int argc, char *const *argv)
 
     /* TODO */ ngx_max_sockets = -1;
 
-    ngx_time_init();    /* 时间初始化 */
+    ngx_time_init();
 
 #if (NGX_PCRE)
-    ngx_regex_init();   /* 正则工具pcre初始化 */
+    ngx_regex_init();
 #endif
 
-    ngx_pid = ngx_getpid(); /* 获取当前进程号 */
+    ngx_pid = ngx_getpid();
 
-    log = ngx_log_init(ngx_prefix);     /* log的初始化 */
+    log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
         return 1;
     }
 
     /* STUB */
 #if (NGX_OPENSSL)
-    ngx_ssl_init(log);  /* ssl的初始化 */
+    ngx_ssl_init(log);
 #endif
 
     /*
@@ -296,15 +296,15 @@ main(int argc, char *const *argv)
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
 
-    init_cycle.pool = ngx_create_pool(1024, log);   /* 内存池的初始化 */
+    init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;
     }
 
-    if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) { /* 参数的保存 */
+    if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;
     }
-    /*init cycle.prefix, cycle.conf_prefix, conf_param, conf_file*/
+
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }
@@ -321,18 +321,16 @@ main(int argc, char *const *argv)
         return 1;
     }
 
-    /* 环境变量NGINX完成socket的继承 */
     if (ngx_add_inherited_sockets(&init_cycle) != NGX_OK) {
         return 1;
     }
 
-    /* 模块索引的初始化，模块计数 */
     ngx_max_module = 0;
     for (i = 0; ngx_modules[i]; i++) {
         ngx_modules[i]->index = ngx_max_module++;
     }
 
-    cycle = ngx_init_cycle(&init_cycle);    /* 初始化全局变量cycle */
+    cycle = ngx_init_cycle(&init_cycle);
     if (cycle == NULL) {
         if (ngx_test_config) {
             ngx_log_stderr(0, "configuration file %s test failed",
@@ -352,10 +350,10 @@ main(int argc, char *const *argv)
     }
 
     if (ngx_signal) {
-        return ngx_signal_process(cycle, ngx_signal);   /* 处理信号参数 */
+        return ngx_signal_process(cycle, ngx_signal);
     }
 
-    ngx_os_status(cycle->log);  /* 操作系统状态信息的输出 */
+    ngx_os_status(cycle->log);
 
     ngx_cycle = cycle;
 
@@ -367,10 +365,10 @@ main(int argc, char *const *argv)
 
 #if !(NGX_WIN32)
 
-    if (ngx_init_signals(cycle->log) != NGX_OK) {   /* 信号处理程序的注册 */
+    if (ngx_init_signals(cycle->log) != NGX_OK) {
         return 1;
     }
-    /* 无继承sockets，且设置了守护进程标识，则调用ngx_daemon()创建守护进程 */
+
     if (!ngx_inherited && ccf->daemon) {
         if (ngx_daemon(cycle->log) != NGX_OK) {
             return 1;
@@ -384,7 +382,7 @@ main(int argc, char *const *argv)
     }
 
 #endif
-    /* 创建进程记录文件*/
+
     if (ngx_create_pidfile(&ccf->pid, cycle->log) != NGX_OK) {
         return 1;
     }
@@ -410,7 +408,7 @@ main(int argc, char *const *argv)
     if (ngx_process == NGX_PROCESS_SINGLE) {
         ngx_single_process_cycle(cycle);
 
-    } else {    /* master-worker模式，调用ngx_master_process_cycle()进入进程循环 */
+    } else {
         ngx_master_process_cycle(cycle);
     }
 

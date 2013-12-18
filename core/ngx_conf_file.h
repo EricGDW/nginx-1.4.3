@@ -100,13 +100,11 @@ struct ngx_open_file_s {
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0       /* 该宏用来初始化最后8个字段 */
 
 /* 模块定义 */
-
 struct ngx_module_s {
     ngx_uint_t            ctx_index;                        /* 模块在上下文中的索引，可以理解为分类模块计数器 */
     ngx_uint_t            index;                            /* 模块在所有模块ngx_modules[]数组中的索引，可以理解为模块计数器 */
 
     /* 以下四字段留作备用，用于将来扩展 */
-
     ngx_uint_t            spare0;
     ngx_uint_t            spare1;
     ngx_uint_t            spare2;
@@ -124,13 +122,12 @@ struct ngx_module_s {
 
     ngx_int_t           (*init_process)(ngx_cycle_t *cycle);/* 初始化工作 */
     ngx_int_t           (*init_thread)(ngx_cycle_t *cycle); /* 初始化线程 */
-    void                (*exit_thread)(ngx_cycle_t *cycle); /* 退出线程 */
+    void                (*exit_thread)(ngx_cycle_t *cycle); /* 退出线程 *//* 各种类型的数据格式化输出到指定长度的buf */
     void                (*exit_process)(ngx_cycle_t *cycle);/* 退出进程 */
 
     void                (*exit_master)(ngx_cycle_t *cycle); /* 退出master */
 
     /* 以下八字段留作备用，用于将来扩展 */
-
     uintptr_t             spare_hook0;
     uintptr_t             spare_hook1;
     uintptr_t             spare_hook2;
@@ -142,15 +139,13 @@ struct ngx_module_s {
 };
 
 /* 核心模块定义 */
-
 typedef struct {
     ngx_str_t             name;                                         /* 核心模块名 */
     void               *(*create_conf)(ngx_cycle_t *cycle);             /* 核心模块创建并初始化conf的函数指针 */
-    char               *(*init_conf)(ngx_cycle_t *cycle, void *conf);   /* 核心模块名初始化函数指针 */
+    char               *(*init_conf)(ngx_cycle_t *cycle, void *conf);   /* 核心模块初始化函数指针 */
 } ngx_core_module_t;
 
 /* 配置文件定义 */
-
 typedef struct {
     ngx_file_t            file;     /* 配置文件对应的文件 */
     ngx_buf_t            *buffer;   /* 配置文件缓存 */
@@ -162,7 +157,6 @@ typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
     ngx_command_t *dummy, void *conf);
 
 /* 配置结构定义 */
-
 struct ngx_conf_s {
     char                 *name;         /* 名称 */
     ngx_array_t          *args;         /* 参数 */
